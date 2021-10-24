@@ -1,0 +1,90 @@
+torchtext：进行文本处理
+tokenize：Tokenization（标识化）处理，也就是说我们将文本分割成一个小块一个小块的例如以一个英文单词为单位或者一个汉字为单位，这样子的操作主要是方便我们可以更集中的去分析文本信息的内容和文本想表达的含义。
+
+准确率和召回率计算：https://blog.csdn.net/weixin_39450145/article/details/115284725
+https://zhuanlan.zhihu.com/p/59862986
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+actual = data3['label']     #真实的类别标签（data3是个dataframe，label是其中的一列）
+predicted = data3['Label']  #预测的类别标签
+ 
+# 计算总的精度
+acc = accuracy_score(actual, predicted)
+print(acc)
+ 
+# 计算混淆矩阵
+confusion_matrix(actual, predicted)
+
+p = precision_score(actual, predicted, average='micro')#参数average有5个选项：{‘micro’微平均, ‘macro’宏平均, ‘samples’, ‘weighted’, ‘binary’}
+
+r = recall_score(actual, predicted, average='micro')
+f1score = f1_score(actual, predicted, average='micro')
+
+分词：除了字母，数字，汉字以外的符号作为分词标志
+模型：
+cnn：new_cnn  :训练命令#python main.py -snapshot ./snapshot/best_steps_100.pt -predict "typhone is comming,if you come home ,you will safe!" 
+    https://www.git2get.com/av/104708678.html
+    使用的jieba分词作为tokenize
+    可使用glove预训练模型
+    模型：1个通道；一层卷积+一层pooling+全联接
+    评价标准：精度：correct/all；
+            准确度和召回率：https://zhuanlan.zhihu.com/p/147663370
+
+    默认参数：
+            学习率：0.001
+            epoch 所有数据训练多少轮：32
+            batch_size 多少个数据进行一次bp？： 8
+           
+            embedding纬度：300
+            channel：1
+            filter_size;3,4,5
+            filter_num:100
+            pretrain_model:840D.300d
+            fine_tund
+            预训练模型
+
+Lstm_0701:python main.py
+
+
+transfomer:
+训练命令：
+export TASK_NAME=test_classifify
+python run_glue.py \
+  --model_name_or_path bert-base-cased \
+  --train_file ../dataset/training_set.csv \
+  --validation_file ../dataset/validation_set.csv \
+  --test_file ../dataset/test_set.csv \
+  --do_train \
+  --do_eval \
+  --do_predict \
+  --max_seq_length 256 \
+  --per_device_train_batch_size 8 \
+  --learning_rate 2e-5 \
+  --num_train_epochs 32 \
+  --overwrite_output_dir True \
+  --output_dir ./$TASK_NAME/
+
+  export TASK_NAME=test_classifify
+python run_glue.py \
+  --model_name_or_path bert-base-cased \
+  --do_train \
+  --do_eval \
+  --do_predict \
+  --max_seq_length 128 \
+  --per_device_train_batch_size 8 \
+  --learning_rate 2e-5 \
+  --num_train_epochs 16 \
+  --output_dir ./$TASK_NAME/
+
+
+  --------------------------------------
+  第一部分：
+  cnn rnn 使用pretrained,
+  1、cnn
+    not-pretrain embedding
+    pre-train embdeding 
+    2channel
+
+
