@@ -1,146 +1,187 @@
-import numpy as np
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Sep  9 13:53:44 2019
+
+@author: jjg
+"""
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
+import os
+import numpy as np
+from torchtext import data
+from torchtext.vocab import Vectors
+from nltk.tokenize import word_tokenize
+from models import TextCNN, LSTM, GRU, BiLSTM_LSTM
+#u can ignore sims
+from sims import Hybrid_CNN, SimCNN, SimLSTM, SimLSTM1, SimLSTM2, SimLSTM3,\
+SimLSTM4, SimLSTM5, SimLSTM6, SimLSTM7, SimLSTM8, SimLSTM9, SimLSTM10, \
+SimLSTM11, SimAttn, SimAttn1, SimAttn2, SimAttn3, SimAttnPE1, SimCnnPe, SimAttnX
 
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import accuracy_score
+from settings import Settings
+from train_eval import training, evaluating,eval_final
+import sys
+sys.path.append('../dataset/')
+import data_extraction as self_data
 
-from src import Preprocessing
-from src import TweetClassifier
+#available models, u can use the first 3 models: TextCNN, LSTM, GRU
+models = {
+    'TextCNN': TextCNN,
+    'LSTM': LSTM,
+    'GRU': GRU,
+    'SimCNN': SimCNN,
+    'SimLSTM': SimLSTM,
+    'Hybrid': Hybrid_CNN,
+    'SimLSTM1': SimLSTM1,
+    'SimLSTM2': SimLSTM2,
+    'SimLSTM3': SimLSTM3,
+    'SimLSTM4': SimLSTM4,
+    'SimLSTM5': SimLSTM5,
+    'SimLSTM6': SimLSTM6,
+    'SimLSTM7': SimLSTM7,
+    'SimLSTM8': SimLSTM8,
+    'BiLSTM_LSTM': BiLSTM_LSTM,
+    'SimLSTM9': SimLSTM9,
+    'SimLSTM10': SimLSTM10,
+    'SimLSTM11': SimLSTM11,
+    'SimAttn': SimAttn,
+    'SimAttn1': SimAttn1,
+    'SimAttn2': SimAttn2,
+    'SimAttnPE1': SimAttnPE1,
+    'SimAttn3': SimAttn3,
+    'SimCnnPe': SimCnnPe,
+    'SimAttnX': SimAttnX
+}
 
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+data_path = '../dataset/'
+vector_path = '../'
+vector_path = os.path.join(vector_path, 'vector')
+cache = os.path.join(vector_path, 'vector_cache')
+#vector_path = '../dataset/'
+#dataset_path = os.path.join(data_path, 'text_classifiacation', 'dbpedia')
+dataset_path=data_path
+# class_vecs is used for models in sims.py, if u don't need, just set use_sims to False
+use_sims = False
+if use_sims:
+    class_vecs = torch.from_numpy(
+        np.load(os.path.join(dataset_path, 'bow_based_label_embedding.npy')))
+else:
+    class_vecs = torch.randn(14, 300)  #14/dbpedia, 10/yahoo
+length = 100  #100/dbpedia; 300/yahoo
 
-from src import parameter_parser
+if __name__ == '__main__':
+    accuracy=[]
+    precise=[]
+    recall=[]
+    f1=[]
+    for i in range(10):
+        print("number i :{:d}".format(i))
+        self_data.a(i)
+        #set batch_first=True
+        TEXT = data.Field(
+            sequential=True,
+            tokenize=word_tokenize,
+            lower=True,
+            fix_length=length,  #according to the dataset
+            batch_first=True)
+
+        #LABEL = data.Field(sequential=False, use_vocab=False, batch_first=True)
+        LABEL = data.Field(sequential=False)
+        fields = {'label': LABEL, 'content': TEXT}
+
+        #use word2vec embeddings(change GoogleNews-vectors-negative300.bin to googlenews.txt)
+        #or use Glove embeddings
+        #TEXT.build_vocab(train, vectors="glove.840B.300d") download the word embedding file
+        
+        if not os.path.exists(cache):
+            os.mkdir(cache)
+        
+        vectors = Vectors(
+            
+            # name=os.path.join(vector_path,'googlenews.txt'),
+            name='/data2/wzf/dataset/word2vec.txt',
+            #name=os.path.join(vector_path, 'glove.840B.300d.txt'),#torch.Size([2196017, 300])
+            cache=cache)
+
+        #load data set
+        train, dev, test = data.TabularDataset.splits(
+            path=dataset_path,
+            train='training_set.csv',
+            validation='validation_set.csv',
+            test='test_set.csv',
+            format='csv',
+            fields=[('label', LABEL), ('content', TEXT)],
+            skip_header=True)
+
+        #construct the vocab, filter low frequency words if needed
+        TEXT.build_vocab(train, min_freq=2, vectors=vectors)
+        LABEL.build_vocab(train, min_freq=2, vectors=vectors)
+        print("#pretrained")
+        #TEXT.build_vocab(train, min_freq=2)
+        #LABEL.build_vocab(train, min_freq=2)
+
+        print(len(LABEL.vocab))
+        print(LABEL.vocab.itos[0:-1])
+        del vectors  #del vectors to save space
+        #print(len(LABEL.vocab))
 
 
-class DatasetMaper(Dataset):
-	'''
-	Handles batches of dataset
-	'''
-	def __init__(self, x, y):
-		self.x = x
-		self.y = y
-		
-	def __len__(self):
-		return len(self.x)
-		
-	def __getitem__(self, idx):
-		return self.x[idx], self.y[idx]
-		
+        #settings, see settings.py for detail
+        label_vecs = class_vecs.unsqueeze(1).unsqueeze(2)  #u can ignore this
+        args = Settings(
+            TEXT.vocab.vectors,  #pre-trained word embeddings
+            #len(TEXT.vocab),
+            label_vecs,
+            L=length,
+            Dim=300,             #embedding dimension
+            num_class=len(LABEL.vocab),        #14/dbpedia, 10/yahoo
+            Cout=128,            #kernel numbers
+            kernel_size=[3, 4, 5],  #different kernel size
+            dropout=0.5,
+            num_epochs=32,
+            lr=0.001,
+            weight_decay=0,
+            #static=True,            #update the embeddings or not
+            static=False,
+            sim_static=True,    #only used for sims.py: update label_vec_kernel or not
+            batch_size=8,
+            batch_normalization=False,
+            hidden_size=256,    #100,128,256...
+            rnn_layers=2,
+            bidirectional=True)  #birnn/rnn
 
-class Execute:
-	'''
-	Class for execution. Initializes the preprocessing as well as the 
-	Tweet Classifier model
-	'''
+        #construct dataset iterator
+        train_iter, dev_iter, test_iter = data.BucketIterator.splits(
+            (train, dev, test),
+            sort_key=lambda x: len(x.content),
+            batch_sizes=[args.batch_size] * 3,
+        )
+        classifier = 'LSTM'
+        if args.static:
+            print('static %s(without updating embeddings):' % classifier)
+        else:
+            print('non-static %s(update embeddings):' % classifier)
 
-	def __init__(self, args):
-		self.__init_data__(args)
-		
-		self.args = args
-		self.batch_size = args.batch_size
-		
-		self.model = TweetClassifier(args)
-		
-	def __init_data__(self, args):
-		'''
-		Initialize preprocessing from raw dataset to dataset split into training and testing
-		Training and test datasets are index strings that refer to tokens
-		'''
-		self.preprocessing = Preprocessing(args)
-		self.preprocessing.load_data()
-		self.preprocessing.prepare_tokens()
+        model = models[classifier](args)
+        training(train_iter, dev_iter, model, args, device)
 
-		raw_x_train = self.preprocessing.x_train
-		raw_x_test = self.preprocessing.x_test
-		
-		self.y_train = self.preprocessing.y_train
-		self.y_test = self.preprocessing.y_test
+        #finally evaluate the test set
+        test_acc = evaluating(test_iter, model, device)
+        print('test acc: %.1f%%' % (test_acc * 100)) #98.8/dbpedia
 
-		self.x_train = self.preprocessing.sequence_to_token(raw_x_train)
-		self.x_test = self.preprocessing.sequence_to_token(raw_x_test)
-		
-	def train(self):
-		
-		training_set = DatasetMaper(self.x_train, self.y_train)
-		test_set = DatasetMaper(self.x_test, self.y_test)
-		
-		self.loader_training = DataLoader(training_set, batch_size=self.batch_size)
-		self.loader_test = DataLoader(test_set)
-		
-		optimizer = optim.RMSprop(self.model.parameters(), lr=args.learning_rate)
-		for epoch in range(args.epochs):
-			
-			predictions = []
-			
-			self.model.train()
-			
-			for x_batch, y_batch in self.loader_training:
-				
-				#x = x_batch.type(torch.LongTensor)
-				#y = y_batch.type(torch.FloatTensor)
-				x = x_batch.long()
-				y = y_batch.long()
-				y=y.unsqueeze(1)
-				print(y.size())
-				y_pred = self.model(x)
-				print("1111")
-				print(y_pred.size())
-				print("2222")
-				#loss = F.binary_cross_entropy(y_pred, y)
-				loss = F.cross_entropy(y_pred, y)
-				
-				optimizer.zero_grad()
-				
-				loss.backward()
-				
-				optimizer.step()
-				
-				predictions += list(y_pred.squeeze().detach().numpy())
-			
-			test_predictions = self.evaluation()
-			
-			train_accuary = self.calculate_accuray(self.y_train, predictions)
-			test_accuracy = self.calculate_accuray(self.y_test, test_predictions)
-			
-			print("Epoch: %d, loss: %.5f, Train accuracy: %.5f, Test accuracy: %.5f" % (epoch+1, loss.item(), train_accuary, test_accuracy))
-			
-	def evaluation(self):
+        acc,p,r,f1score=eval_final(test_iter,model,device)
+        accuracy.append(acc)
+        precise.append(p)
+        recall.append(r)
+        f1.append(f1score)      
+    print(accuracy)
+    avg_acc=np.mean(accuracy)
+    print(recall)
+    avg_recall=np.mean(recall)
+    print(precise)
+    avg_precise=np.mean(precise)
+    print(f1)
+    avg_f1=np.mean(f1)
+    print("avg_acc:{:.6f}, avg_p:{:.6f},avg_eecall:{:.6f},avg_f1score:{:.6f}".format(avg_acc,avg_precise,avg_recall,avg_f1)) 
 
-		predictions = []
-		self.model.eval()
-		with torch.no_grad():
-			for x_batch, y_batch in self.loader_test:
-				x = x_batch.type(torch.LongTensor)
-				y = y_batch.type(torch.FloatTensor)
-				
-				y_pred = self.model(x)
-				predictions += list(y_pred.detach().numpy())
-				
-		return predictions
-			
-	@staticmethod
-	def calculate_accuray(grand_truth, predictions):
-		true_positives = 0
-		true_negatives = 0
-		
-		for true, pred in zip(grand_truth, predictions):
-			if (pred > 0.5) and (true == 1):
-				true_positives += 1
-			elif (pred < 0.5) and (true == 0):
-				true_negatives += 1
-			else:
-				pass
-				
-		return (true_positives+true_negatives) / len(grand_truth)
-	
-if __name__ == "__main__":
-	
-	args = parameter_parser()
-	
-	execute = Execute(args)
-	execute.train()
