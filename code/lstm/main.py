@@ -5,11 +5,12 @@ Created on Mon Sep  9 13:53:44 2019
 
 @author: jjg
 """
-
+import nltk
+nltk.download('punkt')
 import torch
 import os
 import numpy as np
-from torchtext import data
+from torchtext.legacy import data
 from torchtext.vocab import Vectors
 from nltk.tokenize import word_tokenize
 from models import TextCNN, LSTM, GRU, BiLSTM_LSTM
@@ -83,7 +84,7 @@ if __name__ == '__main__':
             sequential=True,
             tokenize=word_tokenize,
             lower=True,
-            fix_length=length,  #according to the dataset
+            fix_length=None,  #according to the dataset
             batch_first=True)
 
         #LABEL = data.Field(sequential=False, use_vocab=False, batch_first=True)
@@ -97,12 +98,12 @@ if __name__ == '__main__':
         if not os.path.exists(cache):
             os.mkdir(cache)
         
-        vectors = Vectors(
+        #vectors = Vectors(
             
             # name=os.path.join(vector_path,'googlenews.txt'),
-            name='/data2/wzf/dataset/word2vec.txt',
+        #    name='/data2/wzf/dataset/word2vec.txt',
             #name=os.path.join(vector_path, 'glove.840B.300d.txt'),#torch.Size([2196017, 300])
-            cache=cache)
+         #   cache=cache)
 
         #load data set
         train, dev, test = data.TabularDataset.splits(
@@ -115,23 +116,23 @@ if __name__ == '__main__':
             skip_header=True)
 
         #construct the vocab, filter low frequency words if needed
-        TEXT.build_vocab(train, min_freq=2, vectors=vectors)
-        LABEL.build_vocab(train, min_freq=2, vectors=vectors)
-        print("#pretrained")
-        #TEXT.build_vocab(train, min_freq=2)
-        #LABEL.build_vocab(train, min_freq=2)
+        #TEXT.build_vocab(train, min_freq=2, vectors=vectors)
+        #LABEL.build_vocab(train, min_freq=2, vectors=vectors)
+        #print("#pretrained")
+        TEXT.build_vocab(train, min_freq=2)
+        LABEL.build_vocab(train, min_freq=2)
 
         print(len(LABEL.vocab))
         print(LABEL.vocab.itos[0:-1])
-        del vectors  #del vectors to save space
+        #del vectors  #del vectors to save space
         #print(len(LABEL.vocab))
 
 
         #settings, see settings.py for detail
         label_vecs = class_vecs.unsqueeze(1).unsqueeze(2)  #u can ignore this
         args = Settings(
-            TEXT.vocab.vectors,  #pre-trained word embeddings
-            #len(TEXT.vocab),
+            #TEXT.vocab.vectors,  #pre-trained word embeddings
+            len(TEXT.vocab),
             label_vecs,
             L=length,
             Dim=300,             #embedding dimension

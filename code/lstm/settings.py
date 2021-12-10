@@ -30,8 +30,8 @@ class Settings(object):
                  bidirectional=False):
 
         #general parameters
-        self.num_embeddings = len(pre_weights)
-        #self.num_embeddings=pre_weights
+        #self.num_embeddings = len(pre_weights)
+        self.num_embeddings=pre_weights
         self.L = L
         self.D = Dim  #embedding dimention
         self.C = num_class  #output size

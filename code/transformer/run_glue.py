@@ -552,7 +552,7 @@ def main():
     precise.append(p)
     recall.append(r)
     f1.append(f1score)
-    #print("acc:{:.6f}, p:{:.6f},recall:{:.6f},f1score:{:.6f}".format(acc,p,r,f1score))
+    print("acc:{:.6f}, p:{:.6f},recall:{:.6f},f1score:{:.6f}".format(acc,p,r,f1score))
    
 
 def _mp_fn(index):

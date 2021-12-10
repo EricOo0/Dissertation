@@ -2,7 +2,7 @@
 My master Dissertation in NTU
 * It is an NLP related dissertation
 * The topic is Online News Analytics based on AI Techniques
-* The main content is to collect a natural disaster dataset and perform news classification tasks
+* The main content is to collect a natural disaster dataset and perform news classification tasks on different feature representation methods and classifier
 
 ## Usage
 
@@ -29,6 +29,92 @@ My master Dissertation in NTU
   ​		data_extraction.py:  is used to separate the dataset into test_set,trainning_set and validation_set. you might have to change the loading path before you use.
 
   ​		build_w2v.py: is to transfer the word2vec to the type that could be used in model.  **<u>You should download GoogleNews-vectors-negative300.bin before using this py</u>**
+
+* 🕸️Bow+LR
+
+  ​	path: code/bow+LR
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+* 🕸️Bow+SVM
+
+  ​	path: code/bow+SVM
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+* 🕸️Bow+Feed-forward
+
+  ​	path: code/bow+feedforward
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+<img src="image/image-20211211003809154.png" alt="image-20211211003809154" style="zoom:50%;" />
+
+* 🕸️TF-IDF+LR
+
+  ​	path: code/bow+LR
+
+  ​	modify the code to use TF-IDF
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+* 🕸️TF-IDF+SVM
+
+  ​	path: code/bow+SVM
+
+  ​	modify the code to use TF-IDF
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+* 🕸️TF-IDF+Feed-forward
+
+  ​	path: code/bow+feedforward
+
+  ​	modify the code to use TF-IDF
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+<img src="image/image-20211211003846660.png" alt="image-20211211003846660" style="zoom:50%;" />
+
+* 🕸️LDA+LR
+
+  ​	path: code/LDA+LR
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+* 🕸️LDA+SVM
+
+  ​	path: code/LDA+SVM
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+* 🕸️LDA+Feed-forward
+
+  ​	path: code/LDA+feedforward
+
+  ​	train and test command : **python3 main.py** 	
+
+  ​	test criteria is: accuracy, precise,recall,f1-score.
+
+<img src="image/image-20211211003943614.png" alt="image-20211211003943614" style="zoom:50%;" />
+
+<img src="image/image-20211211004128139.png" alt="image-20211211004128139" style="zoom:50%;" />
 
 * 🕸️ Text-CNN：
 
@@ -94,6 +180,8 @@ My master Dissertation in NTU
 
   <img src="image/image-20211024135421500.png" alt="image-20211024135421500" style="zoom:50%;" />
 
-  <img src="image/image-20211024135458235.png" alt="image-20211024135458235" style="zoom:50%;" />
+  <img src="image/image-20211211004041421.png" alt="image-20211211004041421" style="zoom:50%;" />
 
   <img src="image/image-20211024135439948.png" alt="image-20211024135439948" style="zoom:50%;" />
+
+  <img src="image/image-20211211004108314.png" alt="image-20211211004108314" style="zoom:50%;" />

@@ -75,7 +75,7 @@ class LSTM(nn.Module):
         
         self.embed = nn.Embedding(self.V, self.D)
         #random时不要
-        self.embed.weight.data.copy_(weight_matrix)
+        #self.embed.weight.data.copy_(weight_matrix)
         if self.static:
             self.embed.weight.requires_grad=False
 
